@@ -47,6 +47,45 @@
   opacity: 1;
 }
 
+.card-favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 3;
+  border: none;
+}
+
+.fragment-card:hover .card-favorite-btn {
+  opacity: 1;
+}
+
+.card-favorite-btn:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  transform: scale(1.1);
+}
+
+.card-favorite-btn.favorited {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.card-favorite-btn.favorited:hover {
+  background: rgba(239, 68, 68, 1);
+}
+
 .pin-dot {
   width: 12px;
   height: 12px;

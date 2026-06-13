@@ -34,11 +34,16 @@ export default function FragmentDetail({
   hasPrev, 
   hasNext,
   relatedFragments,
-  onRelatedClick 
+  onRelatedClick,
+  isFavorite = false,
+  onToggleFavorite,
+  sets = [],
+  onToggleSet
 }) {
   const [imageError, setImageError] = useState(false)
   const [showImageZoom, setShowImageZoom] = useState(false)
   const [copiedColor, setCopiedColor] = useState(null)
+  const [showSetMenu, setShowSetMenu] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -86,6 +91,23 @@ export default function FragmentDetail({
     }
   }
 
+  const handleToggleFavorite = () => {
+    if (onToggleFavorite) {
+      onToggleFavorite(fragment.id)
+    }
+  }
+
+  const handleSetClick = (setId) => {
+    if (onToggleSet) {
+      onToggleSet(fragment.id, setId)
+    }
+  }
+
+  const isInSet = (setId) => {
+    const set = sets.find(s => s.id === setId)
+    return set && set.fragmentIds.includes(fragment.id)
+  }
+
   if (!isOpen || !fragment) return null
 
   const { type, title, content, imageUrl, colors, tags = [], createdAt } = fragment
@@ -126,6 +148,56 @@ export default function FragmentDetail({
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
+        </div>
+
+        <div className="detail-actions">
+          <button 
+            className={`action-btn favorite-btn ${isFavorite ? 'favorited' : ''}`}
+            onClick={handleToggleFavorite}
+            title={isFavorite ? '取消收藏' : '收藏'}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <span>{isFavorite ? '已收藏' : '收藏'}</span>
+          </button>
+          
+          {sets.length > 0 && (
+            <div className="set-menu-container">
+              <button 
+                className="action-btn set-menu-btn"
+                onClick={() => setShowSetMenu(!showSetMenu)}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>灵感集</span>
+              </button>
+              
+              {showSetMenu && (
+                <div className="set-dropdown">
+                  {sets.map((set) => (
+                    <button
+                      key={set.id}
+                      className={`set-option ${isInSet(set.id) ? 'selected' : ''}`}
+                      onClick={() => {
+                        handleSetClick(set.id)
+                        setShowSetMenu(false)
+                      }}
+                    >
+                      <span className="set-icon" style={{ color: set.color }}>{set.icon}</span>
+                      <span className="set-name">{set.name}</span>
+                      {isInSet(set.id) && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="detail-content">

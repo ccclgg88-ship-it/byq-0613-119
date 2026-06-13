@@ -45,12 +45,13 @@ function ColorPalette({ colors }) {
   )
 }
 
-export default function FragmentCard({ fragment, onClick, index = 0 }) {
+export default function FragmentCard({ fragment, onClick, index = 0, isFavorite = false, onToggleFavorite }) {
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
   const {
+    id,
     type,
     title,
     content,
@@ -69,9 +70,16 @@ export default function FragmentCard({ fragment, onClick, index = 0 }) {
     setImageError(true)
   }
 
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation()
+    if (onToggleFavorite) {
+      onToggleFavorite(id)
+    }
+  }
+
   return (
     <div
-      className={`fragment-card ${isPublished ? 'published' : 'draft'} ${type}-card`}
+      className={`fragment-card ${isPublished ? 'published' : 'draft'} ${type}-card ${isFavorite ? 'favorited' : ''}`}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -80,6 +88,18 @@ export default function FragmentCard({ fragment, onClick, index = 0 }) {
       <div className="card-pin">
         <div className="pin-dot" />
       </div>
+
+      {isPublished && onToggleFavorite && (
+        <button
+          className={`card-favorite-btn ${isFavorite ? 'favorited' : ''}`}
+          onClick={handleFavoriteClick}
+          title={isFavorite ? '取消收藏' : '收藏'}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </button>
+      )}
 
       {hasImage && imageUrl && (
         <div className="card-image-container">

@@ -6,6 +6,7 @@ import MasonryGrid from './components/MasonryGrid'
 import SearchBar from './components/SearchBar'
 import TagCloud from './components/TagCloud'
 import SortSelector from './components/SortSelector'
+import InspirationSets from './components/InspirationSets'
 import {
   MEDIA_TYPES,
   MEDIA_TYPE_LABELS,
@@ -23,7 +24,18 @@ import {
   filterByType,
   sortFragments,
   getAllTags,
-  getRelatedFragments
+  getRelatedFragments,
+  getFavorites,
+  saveFavorites,
+  isFavorite,
+  getSets,
+  saveSets,
+  createSet,
+  updateSet,
+  deleteSet,
+  toggleFragmentInSet,
+  filterByFavorite,
+  filterBySet
 } from './utils/storage'
 import { mockFragments } from './data/mockData'
 import './App.css'
@@ -48,6 +60,9 @@ export default function App() {
   const [loaded, setLoaded] = useState(false)
   const [selectedFragment, setSelectedFragment] = useState(null)
   const [showDetail, setShowDetail] = useState(false)
+  const [favorites, setFavorites] = useState([])
+  const [sets, setSets] = useState([])
+  const [activeView, setActiveView] = useState('all')
 
   useEffect(() => {
     const stored = getFragments()
@@ -71,6 +86,9 @@ export default function App() {
       }
     }
 
+    setFavorites(getFavorites())
+    setSets(getSets())
+
     requestAnimationFrame(() => {
       setLoaded(true)
     })
@@ -88,12 +106,23 @@ export default function App() {
 
   const filteredAndSortedFragments = useMemo(() => {
     let result = [...publishedFragments]
+    
+    if (activeView === 'favorites') {
+      result = result.filter(f => favorites.includes(f.id))
+    } else if (activeView.startsWith('set:')) {
+      const setId = activeView.replace('set:', '')
+      const set = sets.find(s => s.id === setId)
+      if (set) {
+        result = result.filter(f => set.fragmentIds.includes(f.id))
+      }
+    }
+    
     result = filterByType(result, activeFilter)
     result = searchFragments(result, searchQuery)
     result = filterByTags(result, selectedTags)
     result = sortFragments(result, sortBy)
     return result
-  }, [publishedFragments, activeFilter, searchQuery, selectedTags, sortBy])
+  }, [publishedFragments, activeFilter, searchQuery, selectedTags, sortBy, activeView, favorites, sets])
 
   const hasActiveFilters = activeFilter !== 'all' || searchQuery.trim() || selectedTags.length > 0
 
@@ -158,6 +187,48 @@ export default function App() {
     setSelectedTags([])
     saveUserPreferences({ sortBy, selectedTags: [] })
   }
+
+  const handleToggleFavorite = useCallback((fragmentId) => {
+    const newFavorites = [...favorites]
+    const index = newFavorites.indexOf(fragmentId)
+    if (index > -1) {
+      newFavorites.splice(index, 1)
+    } else {
+      newFavorites.push(fragmentId)
+    }
+    setFavorites(newFavorites)
+    saveFavorites(newFavorites)
+  }, [favorites])
+
+  const handleToggleSet = useCallback((fragmentId, setId) => {
+    const newSets = toggleFragmentInSet(fragmentId, setId)
+    setSets(newSets)
+  }, [])
+
+  const handleViewChange = useCallback((view) => {
+    setActiveView(view)
+    setActiveFilter('all')
+    setSearchQuery('')
+    setSelectedTags([])
+  }, [])
+
+  const handleCreateSet = useCallback((name, color, icon) => {
+    const newSet = createSet(name, color, icon)
+    setSets(prev => [...prev, newSet])
+  }, [])
+
+  const handleUpdateSet = useCallback((setId, updates) => {
+    const updated = updateSet(setId, updates)
+    setSets(prev => prev.map(s => s.id === setId ? { ...s, ...updates } : s))
+  }, [])
+
+  const handleDeleteSet = useCallback((setId) => {
+    const filtered = deleteSet(setId)
+    setSets(filtered)
+    if (activeView === `set:${setId}`) {
+      setActiveView('all')
+    }
+  }, [activeView])
 
   const handleCardClick = useCallback((fragment) => {
     setSelectedFragment(fragment)
@@ -295,16 +366,32 @@ export default function App() {
                   fragment={fragment}
                   index={index}
                   onClick={() => handleCardClick(fragment)}
+                  isFavorite={favorites.includes(fragment.id)}
+                  onToggleFavorite={handleToggleFavorite}
                 />
               ))}
             </MasonryGrid>
           ) : (
             <div className="empty-state">
-              <div className="empty-icon">◈</div>
-              <p className="empty-title">没有找到匹配的碎片</p>
-              <p className="empty-desc">试试调整筛选条件，或者清除筛选看看全部碎片</p>
-              <button className="btn btn-secondary" onClick={handleClearFilters}>
-                清除筛选
+              <div className="empty-icon">
+                {activeView === 'favorites' ? '⭐' : activeView.startsWith('set:') ? '📁' : '◈'}
+              </div>
+              <p className="empty-title">
+                {activeView === 'favorites' 
+                  ? '还没有收藏任何碎片' 
+                  : activeView.startsWith('set:') 
+                    ? '这个灵感集是空的' 
+                    : '没有找到匹配的碎片'}
+              </p>
+              <p className="empty-desc">
+                {activeView === 'favorites' 
+                  ? '点击碎片卡片上的星标，把喜欢的碎片加入收藏' 
+                  : activeView.startsWith('set:') 
+                    ? '在碎片详情中可以将碎片添加到这个灵感集' 
+                    : '试试调整筛选条件，或者清除筛选看看全部碎片'}
+              </p>
+              <button className="btn btn-secondary" onClick={activeView === 'all' ? handleClearFilters : () => handleViewChange('all')}>
+                {activeView === 'all' ? '清除筛选' : '返回全部碎片'}
               </button>
             </div>
           )}
@@ -319,6 +406,16 @@ export default function App() {
         onDraftSave={handleDraftSaved}
       />
 
+      <InspirationSets
+        sets={sets}
+        favoritesCount={favorites.length}
+        activeView={activeView}
+        onViewChange={handleViewChange}
+        onCreateSet={handleCreateSet}
+        onUpdateSet={handleUpdateSet}
+        onDeleteSet={handleDeleteSet}
+      />
+
       {selectedFragment && (
         <FragmentDetail
           fragment={selectedFragment}
@@ -330,6 +427,10 @@ export default function App() {
           hasNext={currentFragmentIndex < filteredAndSortedFragments.length - 1}
           relatedFragments={relatedFragments}
           onRelatedClick={handleRelatedClick}
+          isFavorite={favorites.includes(selectedFragment.id)}
+          onToggleFavorite={handleToggleFavorite}
+          sets={sets}
+          onToggleSet={handleToggleSet}
         />
       )}
     </div>

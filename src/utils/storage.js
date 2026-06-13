@@ -23,7 +23,9 @@ const STORAGE_KEYS = {
   FRAGMENTS: 'inspiration_fragments',
   DRAFT: 'inspiration_draft',
   DRAFT_UPDATED_AT: 'inspiration_draft_updated_at',
-  USER_PREFERENCES: 'inspiration_preferences'
+  USER_PREFERENCES: 'inspiration_preferences',
+  FAVORITES: 'inspiration_favorites',
+  SETS: 'inspiration_sets'
 }
 
 export const SORT_OPTIONS = {
@@ -233,4 +235,149 @@ export function getRelatedFragments(currentFragment, allFragments, limit = 4) {
     .filter(f => f.matchScore > 0)
     .sort((a, b) => b.matchScore - a.matchScore)
     .slice(0, limit)
+}
+
+export function getFavorites() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.FAVORITES)
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveFavorites(favorites) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites))
+  } catch (e) {
+    console.error('保存收藏失败:', e)
+  }
+}
+
+export function toggleFavorite(fragmentId) {
+  const favorites = getFavorites()
+  const index = favorites.indexOf(fragmentId)
+  if (index > -1) {
+    favorites.splice(index, 1)
+  } else {
+    favorites.push(fragmentId)
+  }
+  saveFavorites(favorites)
+  return favorites
+}
+
+export function isFavorite(fragmentId) {
+  const favorites = getFavorites()
+  return favorites.includes(fragmentId)
+}
+
+export function getSets() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.SETS)
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveSets(sets) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.SETS, JSON.stringify(sets))
+  } catch (e) {
+    console.error('保存灵感集失败:', e)
+  }
+}
+
+export function createSet(name, color = '#D4A574', icon = '📁') {
+  const sets = getSets()
+  const newSet = {
+    id: generateId(),
+    name,
+    color,
+    icon,
+    createdAt: Date.now(),
+    fragmentIds: []
+  }
+  sets.push(newSet)
+  saveSets(sets)
+  return newSet
+}
+
+export function updateSet(setId, updates) {
+  const sets = getSets()
+  const index = sets.findIndex(s => s.id === setId)
+  if (index > -1) {
+    sets[index] = { ...sets[index], ...updates }
+    saveSets(sets)
+    return sets[index]
+  }
+  return null
+}
+
+export function deleteSet(setId) {
+  const sets = getSets()
+  const filtered = sets.filter(s => s.id !== setId)
+  saveSets(filtered)
+  return filtered
+}
+
+export function addFragmentToSet(fragmentId, setId) {
+  const sets = getSets()
+  const set = sets.find(s => s.id === setId)
+  if (set && !set.fragmentIds.includes(fragmentId)) {
+    set.fragmentIds.push(fragmentId)
+    saveSets(sets)
+  }
+  return sets
+}
+
+export function removeFragmentFromSet(fragmentId, setId) {
+  const sets = getSets()
+  const set = sets.find(s => s.id === setId)
+  if (set) {
+    set.fragmentIds = set.fragmentIds.filter(id => id !== fragmentId)
+    saveSets(sets)
+  }
+  return sets
+}
+
+export function toggleFragmentInSet(fragmentId, setId) {
+  const sets = getSets()
+  const set = sets.find(s => s.id === setId)
+  if (set) {
+    const index = set.fragmentIds.indexOf(fragmentId)
+    if (index > -1) {
+      set.fragmentIds.splice(index, 1)
+    } else {
+      set.fragmentIds.push(fragmentId)
+    }
+    saveSets(sets)
+  }
+  return sets
+}
+
+export function getFragmentsInSet(setId, allFragments) {
+  const sets = getSets()
+  const set = sets.find(s => s.id === setId)
+  if (!set) return []
+  return allFragments.filter(f => set.fragmentIds.includes(f.id))
+}
+
+export function getSetsForFragment(fragmentId) {
+  const sets = getSets()
+  return sets.filter(s => s.fragmentIds.includes(fragmentId))
+}
+
+export function filterByFavorite(fragments, isFavoriteView) {
+  if (!isFavoriteView) return fragments
+  const favorites = getFavorites()
+  return fragments.filter(f => favorites.includes(f.id))
+}
+
+export function filterBySet(fragments, setId) {
+  if (!setId) return fragments
+  const sets = getSets()
+  const set = sets.find(s => s.id === setId)
+  if (!set) return fragments
+  return fragments.filter(f => set.fragmentIds.includes(f.id))
 }
