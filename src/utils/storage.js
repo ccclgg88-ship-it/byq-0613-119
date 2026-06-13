@@ -22,7 +22,37 @@ export const MEDIA_TYPE_ICONS = {
 const STORAGE_KEYS = {
   FRAGMENTS: 'inspiration_fragments',
   DRAFT: 'inspiration_draft',
-  DRAFT_UPDATED_AT: 'inspiration_draft_updated_at'
+  DRAFT_UPDATED_AT: 'inspiration_draft_updated_at',
+  USER_PREFERENCES: 'inspiration_preferences'
+}
+
+export const SORT_OPTIONS = {
+  NEWEST: 'newest',
+  OLDEST: 'oldest',
+  TITLE_AZ: 'title_az'
+}
+
+export const SORT_LABELS = {
+  [SORT_OPTIONS.NEWEST]: '最新优先',
+  [SORT_OPTIONS.OLDEST]: '最早优先',
+  [SORT_OPTIONS.TITLE_AZ]: '标题 A–Z'
+}
+
+export function getUserPreferences() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES)
+    return data ? JSON.parse(data) : { sortBy: SORT_OPTIONS.NEWEST, selectedTags: [] }
+  } catch {
+    return { sortBy: SORT_OPTIONS.NEWEST, selectedTags: [] }
+  }
+}
+
+export function saveUserPreferences(preferences) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, JSON.stringify(preferences))
+  } catch (e) {
+    console.error('保存用户偏好失败:', e)
+  }
 }
 
 const DRAFT_EXPIRY_DAYS = 7
@@ -126,4 +156,81 @@ export function fileToDataURL(file) {
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
+}
+
+export function searchFragments(fragments, query) {
+  if (!query || !query.trim()) return fragments
+  
+  const lowerQuery = query.toLowerCase().trim()
+  return fragments.filter(fragment => {
+    const titleMatch = fragment.title && fragment.title.toLowerCase().includes(lowerQuery)
+    const contentMatch = fragment.content && fragment.content.toLowerCase().includes(lowerQuery)
+    const tagsMatch = fragment.tags && fragment.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    return titleMatch || contentMatch || tagsMatch
+  })
+}
+
+export function filterByTags(fragments, tags) {
+  if (!tags || tags.length === 0) return fragments
+  
+  return fragments.filter(fragment => {
+    return tags.every(tag => fragment.tags && fragment.tags.includes(tag))
+  })
+}
+
+export function filterByType(fragments, type) {
+  if (!type || type === 'all') return fragments
+  return fragments.filter(fragment => fragment.type === type)
+}
+
+export function sortFragments(fragments, sortBy) {
+  const sorted = [...fragments]
+  
+  switch (sortBy) {
+    case SORT_OPTIONS.NEWEST:
+      return sorted.sort((a, b) => b.createdAt - a.createdAt)
+    case SORT_OPTIONS.OLDEST:
+      return sorted.sort((a, b) => a.createdAt - b.createdAt)
+    case SORT_OPTIONS.TITLE_AZ:
+      return sorted.sort((a, b) => {
+        const titleA = (a.title || '').toLowerCase()
+        const titleB = (b.title || '').toLowerCase()
+        return titleA.localeCompare(titleB)
+      })
+    default:
+      return sorted
+  }
+}
+
+export function getAllTags(fragments) {
+  const tagCount = {}
+  fragments.forEach(fragment => {
+    if (fragment.tags) {
+      fragment.tags.forEach(tag => {
+        tagCount[tag] = (tagCount[tag] || 0) + 1
+      })
+    }
+  })
+  
+  return Object.entries(tagCount)
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+export function getRelatedFragments(currentFragment, allFragments, limit = 4) {
+  const currentTags = currentFragment.tags || []
+  if (currentTags.length === 0) return []
+  
+  return allFragments
+    .filter(f => f.id !== currentFragment.id && f.isPublished)
+    .map(f => {
+      const commonTags = (f.tags || []).filter(tag => currentTags.includes(tag))
+      return {
+        ...f,
+        matchScore: commonTags.length
+      }
+    })
+    .filter(f => f.matchScore > 0)
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, limit)
 }

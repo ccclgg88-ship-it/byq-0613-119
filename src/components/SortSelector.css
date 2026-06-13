@@ -1,0 +1,73 @@
+.sort-selector {
+  position: relative;
+}
+
+.sort-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.sort-trigger:hover {
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.sort-label {
+  font-weight: 500;
+}
+
+.sort-value {
+  color: var(--text-tertiary);
+}
+
+.sort-arrow {
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+}
+
+.sort-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.sort-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.sort-option:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.sort-option.selected {
+  background: var(--accent-muted);
+  color: var(--accent-color);
+}
