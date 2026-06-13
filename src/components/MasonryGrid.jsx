@@ -56,14 +56,18 @@ export default function MasonryGrid({ children, gap = 20 }) {
   })
 
   return (
-    <div ref={containerRef} className="masonry-grid">
+    <div
+      ref={containerRef}
+      className="masonry-grid"
+      style={{ columnGap: `${gap}px` }}
+    >
       {columnWrappers.map((columnItems, colIndex) => (
         <div
           key={colIndex}
           className="masonry-column"
           style={{
             width: `calc((100% - ${gap * (columns - 1)}px) / ${columns})`,
-            gap: `${gap}px`
+            rowGap: `${gap}px`
           }}
         >
           {columnItems.map((item, idx) => (

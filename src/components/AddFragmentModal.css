@@ -131,10 +131,16 @@
   font-size: 14px;
   transition: border-color 0.2s ease;
   outline: none;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .form-input:focus {
   border-color: var(--accent-color);
+}
+
+.form-input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .form-textarea {
@@ -147,10 +153,16 @@
   transition: border-color 0.2s ease;
   outline: none;
   font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .form-textarea:focus {
   border-color: var(--accent-color);
+}
+
+.form-textarea::placeholder {
+  color: var(--text-tertiary);
 }
 
 .form-hint {
@@ -252,6 +264,11 @@
   font-size: 13px;
   padding: 4px 6px;
   background: transparent;
+  color: var(--text-primary);
+}
+
+.tag-input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .colors-list {

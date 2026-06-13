@@ -3,10 +3,14 @@ import { MEDIA_TYPES, MEDIA_TYPE_ICONS, MEDIA_TYPE_LABELS } from '../utils/stora
 import './FragmentCard.css'
 
 const PLACEHOLDER_IMAGE = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
-    <rect width="400" height="300" fill="#1e1d1c"/>
-    <text x="50%" y="46%" text-anchor="middle" dy=".3em" fill="#6b6560" font-family="sans-serif" font-size="14">图片加载失败</text>
-    <line x1="160" y1="160" x2="240" y2="160" stroke="#3a3836" stroke-width="1"/>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220">
+    <rect width="400" height="220" fill="#232221"/>
+    <g transform="translate(200, 95)">
+      <rect x="-30" y="-25" width="60" height="50" rx="6" fill="none" stroke="#3a3836" stroke-width="2"/>
+      <line x1="-30" y1="25" x2="30" y2="-25" stroke="#3a3836" stroke-width="2"/>
+      <circle cx="-10" cy="-10" r="6" fill="#3a3836"/>
+    </g>
+    <text x="200" y="170" text-anchor="middle" fill="#9c9590" font-family="sans-serif" font-size="14">图片加载失败</text>
   </svg>`
 )
 
@@ -85,7 +89,7 @@ export default function FragmentCard({ fragment, onClick, index = 0 }) {
           <img
             src={imageError ? PLACEHOLDER_IMAGE : imageUrl}
             alt={title}
-            className={`card-image ${imageLoaded ? 'loaded' : ''}`}
+            className={`card-image ${imageLoaded || imageError ? 'loaded' : ''}`}
             onError={handleImageError}
             onLoad={() => setImageLoaded(true)}
             loading="lazy"
